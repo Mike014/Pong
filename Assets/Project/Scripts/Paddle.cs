@@ -4,15 +4,18 @@ using UnityEngine;
 
 public class Paddle : MonoBehaviour
 {
-    // Start is called before the first frame update
+    [SerializeField] private float speed = 3f;
+    private Rigidbody2D rb;
+
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        // GetAxis() è istantaneo grazie alle impostazioni
+        float verticalMovement = Input.GetAxis("Vertical");
+        rb.velocity = new Vector2(0, verticalMovement * speed);
     }
 }
