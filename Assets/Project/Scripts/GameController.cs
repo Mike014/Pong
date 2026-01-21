@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Necessario per ricaricare la scena
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -14,6 +14,8 @@ public class GameController : MonoBehaviour
     public Text score2Text;
     public Text pauseText;
     public Text winnerText;
+    // NUOVO: Riferimento all'immagine di pausa (o pannello)
+    public GameObject pauseImage; 
 
     // ============================================
     // CONFIGURAZIONE DI GIOCO
@@ -35,35 +37,32 @@ public class GameController : MonoBehaviour
     // ============================================
     void Start()
     {
-        // Blocca il cursore all'interno della finestra di gioco
         Cursor.lockState = CursorLockMode.Locked;
 
         InitializeBall();
         UpdateScoreDisplay();
         
-        // Assicuriamoci che i testi siano spenti all'avvio
+        // Inizializzazione stati UI
         if(pauseText != null) pauseText.gameObject.SetActive(false);
         if(winnerText != null) winnerText.gameObject.SetActive(false);
+        // NUOVO: Nasconde l'immagine all'avvio
+        if(pauseImage != null) pauseImage.SetActive(false); 
         
-        // Assicuriamoci che il tempo scorra normalmente
         Time.timeScale = 1f;
     }
 
     void Update()
     {
-        // Gestione Pausa
         if (Input.GetKeyDown(KeyCode.Tab) && !_gameOver)
         {
             TogglePause();
         }
 
-        // Gestione Uscita
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             QuitGame();
         }
 
-        // Se il gioco non è finito, controlla la posizione della palla
         if (!_gameOver)
         {
             CheckBallPosition();
@@ -77,7 +76,13 @@ public class GameController : MonoBehaviour
     private void TogglePause()
     {
         _isPaused = !_isPaused;
-        pauseText.gameObject.SetActive(_isPaused);
+        
+        // Gestione visibilità testo
+        if(pauseText != null) pauseText.gameObject.SetActive(_isPaused);
+        
+        // NUOVO: Gestione visibilità immagine
+        if(pauseImage != null) pauseImage.SetActive(_isPaused);
+        
         Time.timeScale = _isPaused ? 0f : 1f;
     }
 
@@ -157,12 +162,14 @@ public class GameController : MonoBehaviour
     private void DisplayWinner(string playerName)
     {
         _gameOver = true;
-        Time.timeScale = 0f; // Ferma il gioco
+        Time.timeScale = 0f; 
         
-        winnerText.gameObject.SetActive(true);
-        winnerText.text = playerName + " WINS!";
+        if(winnerText != null)
+        {
+            winnerText.gameObject.SetActive(true);
+            winnerText.text = playerName + " WINS!";
+        }
         
-        // Avvia il riavvio ignorando il Time.timeScale a 0
         StartCoroutine(RestartGameAfterDelay(3f));
     }
 
@@ -175,10 +182,6 @@ public class GameController : MonoBehaviour
         }
     }
 
-    // ============================================
-    // COROUTINES (GESTIONE TEMPO)
-    // ============================================
-
     private IEnumerator SpawnNewBallAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
@@ -187,13 +190,8 @@ public class GameController : MonoBehaviour
 
     private IEnumerator RestartGameAfterDelay(float delay)
     {
-        // Utilizziamo Realtime perché il Time.timeScale è a 0
         yield return new WaitForSecondsRealtime(delay);
-        
-        // Ripristiniamo il tempo prima di caricare
         Time.timeScale = 1f;
-        
-        // Ricarica la scena corrente
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
