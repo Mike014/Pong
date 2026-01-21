@@ -1,7 +1,3 @@
-Here is the updated `README.md` file in English. It incorporates the specific description you requested, strictly follows the "No Emojis" rule, reflects the Unity 2022 version, and accurately describes the AI and Pause Image mechanics found in your code.
-
----
-
 # Pong 2D - Unity Project
 
 This repository contains a modern reimplementation of the classic arcade game **Pong**, developed in Unity 2022 LTS.
