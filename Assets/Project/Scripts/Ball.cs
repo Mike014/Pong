@@ -7,7 +7,10 @@ public class Ball : MonoBehaviour
     // ============================================
     // VARIABILI
     // ============================================
-    public float speed = 1f;
+    public float minXSpeed = 0.8f;
+    public float maxXSpeed = 1.2f;
+    public float minYSpeed = 0.8f;
+    public float maxYSpeed = 1.2f;
     private Rigidbody2D _ballRigidBody;
 
     // ============================================
@@ -16,7 +19,8 @@ public class Ball : MonoBehaviour
     void Start()
     {
         _ballRigidBody = GetComponent<Rigidbody2D>();
-        _ballRigidBody.velocity = new Vector2(-0.5f, speed);
+        _ballRigidBody.velocity = new Vector2
+        (Random.Range(minXSpeed, maxXSpeed) * (Random.value > 0.5f ? -1 : 1), Random.Range(minYSpeed, maxYSpeed) * (Random.value > 0.5f ? -1 : 1));
     }
 
     void Update()
