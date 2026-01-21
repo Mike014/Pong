@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // Necessario per ricaricare la scena
 
 public class GameController : MonoBehaviour
 {
@@ -11,11 +12,14 @@ public class GameController : MonoBehaviour
     public GameObject ballPrefab;
     public Text score1Text;
     public Text score2Text;
+    public Text pauseText;
+    public Text winnerText;
 
     // ============================================
     // CONFIGURAZIONE DI GIOCO
     // ============================================
     public float scoreCoordinates = 2.75f;
+    public int maxScore = 5;
 
     // ============================================
     // DATI PRIVATI
@@ -23,146 +27,182 @@ public class GameController : MonoBehaviour
     private Ball _currentBall;
     private int _score1 = 0;
     private int _score2 = 0;
+    private bool _isPaused = false;
+    private bool _gameOver = false;
 
     // ============================================
     // LIFECYCLE
     // ============================================
     void Start()
     {
+        // Blocca il cursore all'interno della finestra di gioco
+        Cursor.lockState = CursorLockMode.Locked;
+
         InitializeBall();
         UpdateScoreDisplay();
+        
+        // Assicuriamoci che i testi siano spenti all'avvio
+        if(pauseText != null) pauseText.gameObject.SetActive(false);
+        if(winnerText != null) winnerText.gameObject.SetActive(false);
+        
+        // Assicuriamoci che il tempo scorra normalmente
+        Time.timeScale = 1f;
     }
 
     void Update()
     {
-        CheckBallPosition();
+        // Gestione Pausa
+        if (Input.GetKeyDown(KeyCode.Tab) && !_gameOver)
+        {
+            TogglePause();
+        }
+
+        // Gestione Uscita
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            QuitGame();
+        }
+
+        // Se il gioco non è finito, controlla la posizione della palla
+        if (!_gameOver)
+        {
+            CheckBallPosition();
+        }
     }
 
     // ============================================
-    // METODI PRIVATI
+    // LOGICA DI GIOCO
     // ============================================
 
-    /// <summary>
-    /// Inizializza la palla all'inizio della partita.
-    /// </summary>
+    private void TogglePause()
+    {
+        _isPaused = !_isPaused;
+        pauseText.gameObject.SetActive(_isPaused);
+        Time.timeScale = _isPaused ? 0f : 1f;
+    }
+
+    private void QuitGame()
+    {
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
+    }
+
     private void InitializeBall()
     {
-        if (ballPrefab == null)
-        {
-            Debug.LogError("❌ Ball Prefab non assegnato nell'Inspector!");
-            return;
-        }
+        if (ballPrefab == null) return;
 
         GameObject ballInstance = Instantiate(ballPrefab, transform);
         _currentBall = ballInstance.GetComponent<Ball>();
 
-        if (_currentBall == null)
+        if (_currentBall != null)
         {
-            Debug.LogError("❌ Ball Prefab non ha il componente Ball script!");
-            return;
+            _currentBall.transform.position = Vector3.zero;
+            SetBallReferenceToPaddles();
         }
-
-        _currentBall.transform.position = Vector3.zero;
-        Debug.Log("✅ Palla inizializzata a posizione (0, 0, 0)");
-
-        SetBallReferenceToPaddles();
     }
 
-    /// <summary>
-    /// Aggiorna la visualizzazione dei punteggi nella UI.
-    /// </summary>
     private void UpdateScoreDisplay()
     {
-        if (score1Text != null)
-            score1Text.text = _score1.ToString();
-
-        if (score2Text != null)
-            score2Text.text = _score2.ToString();
+        if (score1Text != null) score1Text.text = _score1.ToString();
+        if (score2Text != null) score2Text.text = _score2.ToString();
     }
 
-    /// <summary>
-    /// Controlla la posizione della palla e aggiorna i punteggi.
-    /// </summary>
     private void CheckBallPosition()
     {
-        if (_currentBall == null)
-            return;
+        if (_currentBall == null) return;
 
         float ballX = _currentBall.transform.position.x;
 
-        // Giocatore 1 segna (palla a destra)
         if (ballX > scoreCoordinates)
         {
             _score1++;
-            UpdateScoreDisplay();
-            DestroyBall();
-            Debug.Log($"🎉 Player 1 segna! Score: {_score1} - {_score2}");
+            ProcessGoal();
         }
-
-        // Giocatore 2 segna (palla a sinistra)
-        if (ballX < -scoreCoordinates)
+        else if (ballX < -scoreCoordinates)
         {
             _score2++;
-            UpdateScoreDisplay();
-            DestroyBall();
-            Debug.Log($"🎉 Player 2 segna! Score: {_score1} - {_score2}");
+            ProcessGoal();
         }
     }
 
-    /// <summary>
-    /// Distrugge la palla attuale dopo un goal.
-    /// </summary>
-    private void DestroyBall()
+    private void ProcessGoal()
     {
-        if (_currentBall != null)
+        UpdateScoreDisplay();
+        DestroyBall();
+        
+        if (!CheckWinner())
         {
-            Debug.Log("🗑️ Palla distrutta");
-            Destroy(_currentBall.gameObject);
-            _currentBall = null;
-            
-            // ✅ Crea una nuova palla dopo una piccola pausa
             StartCoroutine(SpawnNewBallAfterDelay(1f));
         }
     }
 
-    /// <summary>
-    /// Crea una nuova palla dopo un delay (coroutine).
-    /// </summary>
-    /// <param name="delay">Tempo di attesa in secondi prima di creare la nuova palla</param>
-    private IEnumerator SpawnNewBallAfterDelay(float delay)
+    private bool CheckWinner()
     {
-        Debug.Log($"⏳ Attendendo {delay} secondi prima di creare una nuova palla...");
-        yield return new WaitForSeconds(delay);
-        InitializeBall();
-        Debug.Log("✅ Nuova palla creata!");
+        if (_score1 >= maxScore)
+        {
+            DisplayWinner("PLAYER 1");
+            return true;
+        }
+        if (_score2 >= maxScore)
+        {
+            DisplayWinner("PLAYER 2");
+            return true;
+        }
+        return false;
     }
 
-    /// <summary>
-    /// Resetta la posizione della palla (usato solo se riutilizzi la stessa palla).
-    /// </summary>
-    private void ResetBall()
+    private void DisplayWinner(string playerName)
+    {
+        _gameOver = true;
+        Time.timeScale = 0f; // Ferma il gioco
+        
+        winnerText.gameObject.SetActive(true);
+        winnerText.text = playerName + " WINS!";
+        
+        // Avvia il riavvio ignorando il Time.timeScale a 0
+        StartCoroutine(RestartGameAfterDelay(3f));
+    }
+
+    private void DestroyBall()
     {
         if (_currentBall != null)
         {
-            _currentBall.transform.position = Vector3.zero;
-            // Opzionale: resetta anche la velocità
-            Rigidbody2D rb = _currentBall.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.velocity = new Vector2(-0.5f, 1f);
-            }
+            Destroy(_currentBall.gameObject);
+            _currentBall = null;
         }
+    }
+
+    // ============================================
+    // COROUTINES (GESTIONE TEMPO)
+    // ============================================
+
+    private IEnumerator SpawnNewBallAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (!_gameOver) InitializeBall();
+    }
+
+    private IEnumerator RestartGameAfterDelay(float delay)
+    {
+        // Utilizziamo Realtime perché il Time.timeScale è a 0
+        yield return new WaitForSecondsRealtime(delay);
+        
+        // Ripristiniamo il tempo prima di caricare
+        Time.timeScale = 1f;
+        
+        // Ricarica la scena corrente
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void SetBallReferenceToPaddles()
     {
         Paddle[] paddles = FindObjectsOfType<Paddle>();
-        
         foreach (Paddle paddle in paddles)
         {
             paddle.SetBallReference(_currentBall.transform, _currentBall.GetComponent<Rigidbody2D>());
         }
-        
-        Debug.Log("✅ Riferimento palla assegnato ai paddle");
     }
 }

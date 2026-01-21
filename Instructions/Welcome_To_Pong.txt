@@ -1,0 +1,33 @@
+Welcome to Pong
+Prepare for a fast-paced challenge! In this classic arcade experience, your goal is to defend your side and outscore your opponent. 
+Be careful: the longer a rally lasts, the faster the ball will travel.
+
+Controls
+
+Paddle Movement Control your paddle's vertical position to block the ball.
+
+- Up: Press the W key or the Up Arrow.
+
+- Down: Press the S key or the Down Arrow.
+
+System Controls
+
+- Pause/Resume: Press the Tab key to freeze the game at any time.
+
+- Quit Game: Press the Escape key to exit.
+
+Game Rules
+- Scoring: A point is awarded to you if the ball passes your opponent's paddle and crosses the boundary.
+
+- Winning the Match: The first player to reach 5 points is declared the winner.
+
+- The Difficulty Multiplier: Every time the ball hits a paddle, its speed increases. This makes long rallies intense and requires quick reflexes!
+
+- Restarting: Once a player wins, the scoreboard will show the victor for 3 seconds before the match automatically resets for a new game.
+
+Pro Tips
+Anticipate the Bounce: Since the ball gains speed with every hit, position yourself early.
+
+Stay Focused: The physics are precise. Use the edges of your paddle to send the ball back with different trajectories.
+
+Good luck and have fun!
